@@ -19,7 +19,7 @@ build/
 Thumbs.db
 
 # IDE files
-.vscode
+.vscode/
 .idea/
 *.swp
 *.swo
