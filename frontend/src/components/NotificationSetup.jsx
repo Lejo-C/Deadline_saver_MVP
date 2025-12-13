@@ -8,10 +8,15 @@ export default function NotificationSetup({ publicKey }) {
       if (permission !== "granted") return;
 
       const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: publicKey
-      });
+
+const existing = await registration.pushManager.getSubscription();
+if (existing) return;
+
+const subscription = await registration.pushManager.subscribe({
+  userVisibleOnly: true,
+  applicationServerKey: publicKey
+});
+
 
       await sendSubscription(subscription);
     }

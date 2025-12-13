@@ -184,7 +184,7 @@ npm run build
 
 ## 🔌 Backend Requirements
 
-Your backend should be running on `http://localhost:5000` with the following routes:
+Your backend should be running on `` with the following routes:
 
 ```javascript
 POST   /api/assignments/analyze  // Create
