@@ -6,36 +6,60 @@ let vapidInitialized = false;
 
 const initializeVapid = () => {
     if (!vapidInitialized) {
+        if (!process.env.PUBLIC_VAPID_KEY || !process.env.PRIVATE_VAPID_KEY) {
+            console.error("❌ Missing VAPID keys in environment!");
+        }
+
         webpush.setVapidDetails(
             "mailto:your@email.com",
             process.env.PUBLIC_VAPID_KEY,
             process.env.PRIVATE_VAPID_KEY
         );
+
         vapidInitialized = true;
     }
 };
 
 export const saveSubscription = async (req, res) => {
-    initializeVapid(); // Initialize on first use
+    initializeVapid();
+
     try {
-        // Use findOneAndUpdate with upsert to handle duplicates gracefully
-        // Assuming endpoint is unique for a client
         await Subscription.findOneAndUpdate(
             { endpoint: req.body.endpoint },
             req.body,
             { upsert: true, new: true }
         );
+
+        console.log("✅ Subscription saved:", req.body.endpoint);
         res.status(201).json({ message: "Subscribed" });
     } catch (err) {
-        console.error("Subscription error:", err);
+        console.error("❌ Subscription error:", err);
         res.status(500).json({ error: "Failed to save subscription" });
     }
 };
 
 export const sendPushToAll = async (payload) => {
-    initializeVapid(); // Initialize on first use
+    initializeVapid();
+
     const subs = await Subscription.find();
-    subs.forEach(sub => {
-        webpush.sendNotification(sub, JSON.stringify(payload)).catch(console.error);
+
+    const safePayload = JSON.stringify(
+        payload || { title: "No title", body: "Empty payload" }
+    );
+
+    subs.forEach((sub) => {
+        webpush
+            .sendNotification(sub, safePayload)
+            .then(() => console.log("✅ Push sent to:", sub.endpoint))
+            .catch((err) => {
+                console.error("❌ Push error:", err.body || err);
+
+                // Auto-clean invalid subscriptions
+                if (err.statusCode === 410 || err.statusCode === 404) {
+                    Subscription.deleteOne({ endpoint: sub.endpoint }).then(() =>
+                        console.log("🗑️ Removed expired subscription:", sub.endpoint)
+                    );
+                }
+            });
     });
 };
