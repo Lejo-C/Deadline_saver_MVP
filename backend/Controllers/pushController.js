@@ -18,9 +18,16 @@ const initializeVapid = () => {
 export const saveSubscription = async (req, res) => {
     initializeVapid(); // Initialize on first use
     try {
-        const sub = await Subscription.create(req.body);
+        // Use findOneAndUpdate with upsert to handle duplicates gracefully
+        // Assuming endpoint is unique for a client
+        await Subscription.findOneAndUpdate(
+            { endpoint: req.body.endpoint },
+            req.body,
+            { upsert: true, new: true }
+        );
         res.status(201).json({ message: "Subscribed" });
     } catch (err) {
+        console.error("Subscription error:", err);
         res.status(500).json({ error: "Failed to save subscription" });
     }
 };

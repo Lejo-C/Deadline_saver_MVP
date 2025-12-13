@@ -9,16 +9,15 @@ export default function NotificationSetup({ publicKey }) {
 
       const registration = await navigator.serviceWorker.ready;
 
-      const existing = await registration.pushManager.getSubscription();
-      // If subscription exists, we might want to update it or return (depending on logic). For now, returning is fine.
-      if (existing) return;
+      let subscription = await registration.pushManager.getSubscription();
 
-      const convertedVapidKey = urlBase64ToUint8Array(publicKey);
-
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: convertedVapidKey
-      });
+      if (!subscription) {
+        const convertedVapidKey = urlBase64ToUint8Array(publicKey);
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: convertedVapidKey
+        });
+      }
 
       function urlBase64ToUint8Array(base64String) {
         const padding = '='.repeat((4 - base64String.length % 4) % 4);
