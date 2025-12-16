@@ -29,7 +29,7 @@ export default function NotificationSetup() {
             });
 
             if (token) {
-              console.log("✅ FCM Token:", token);
+              console.log("✅ FCM Token generated");
               // Send to backend
               await axios.post("http://localhost:5000/api/fcm/save-token", { token });
             } else {

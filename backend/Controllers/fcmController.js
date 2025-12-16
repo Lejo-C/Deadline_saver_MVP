@@ -6,7 +6,7 @@ export const saveToken = async (req, res) => {
     const { token } = req.body;
 
     if (!token) {
-        return res.status(400).json({ error: "Token is required" });
+        return res.status(400).json({ success: false, error: "Token is required" });
     }
 
     try {
@@ -16,10 +16,11 @@ export const saveToken = async (req, res) => {
             { upsert: true, new: true }
         );
 
-        res.status(200).json({ message: "Token saved successfully" });
+        console.log("✅ FCM Token saved successfully");
+        res.status(200).json({ success: true, message: "Token saved successfully" });
     } catch (err) {
         console.error("Error saving FCM token:", err);
-        res.status(500).json({ error: "Internal Server Error" });
+        res.status(500).json({ success: false, error: "Internal Server Error" });
     }
 };
 
@@ -48,9 +49,12 @@ export const sendToAllDevices = async (title, body) => {
     if (response.failureCount > 0) {
         response.responses.forEach((resp, idx) => {
             if (!resp.success) {
+                // Log error code but NOT the token
+                console.log(`❌ Failed to send to a token: ${resp.error.code}`);
+
                 if (resp.error.code === "messaging/registration-token-not-registered") {
                     FCMToken.deleteOne({ token: tokens[idx] })
-                        .then(() => console.log("🗑️ Removed invalid token:", tokens[idx]))
+                        .then(() => console.log("🗑️ Removed invalid token"))
                         .catch(console.error);
                 }
             }
@@ -73,6 +77,6 @@ export const sendNotificationToAll = async (req, res) => {
         res.status(200).json(result);
     } catch (err) {
         console.error("Error sending notification:", err);
-        res.status(500).json({ error: err.message || "Failed to send notification" });
+        res.status(500).json({ success: false, error: err.message || "Failed to send notification" });
     }
 };
