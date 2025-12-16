@@ -1,45 +1,49 @@
-import { useEffect } from "react";
-import { sendSubscription } from "../api/push";
+import { useEffect, useState } from "react";
+import { messaging } from "../firebase";
+import { getToken } from "firebase/messaging";
+import axios from "axios";
 
-export default function NotificationSetup({ publicKey }) {
+export default function NotificationSetup() {
+  const [permission, setPermission] = useState(Notification.permission);
+
+  // VAPID Key from Project Settings > Cloud Messaging > Web configuration
+  const VAPID_KEY = "BLvGIQsE3nTVDWJW33VHy9siZ_KenlGlsIZIpZA1X21qUihsereFFWC_ElTiQwKMEZgrpzmemyfRHTz4OL4DdLY";
+
   useEffect(() => {
-    async function setupPush() {
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") return;
+    async function requestPermission() {
+      try {
+        const permission = await Notification.requestPermission();
+        setPermission(permission);
 
-      const registration = await navigator.serviceWorker.ready;
+        if (permission === "granted") {
+          // Check if Service Worker is supported
+          if ('serviceWorker' in navigator) {
+            // Register the Firebase specific SW
+            const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+            console.log("Service Worker registered with scope:", registration.scope);
 
-      let subscription = await registration.pushManager.getSubscription();
+            // Get Token
+            const token = await getToken(messaging, {
+              vapidKey: VAPID_KEY,
+              serviceWorkerRegistration: registration
+            });
 
-      if (!subscription) {
-        const convertedVapidKey = urlBase64ToUint8Array(publicKey);
-        subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: convertedVapidKey
-        });
-      }
-
-      function urlBase64ToUint8Array(base64String) {
-        const padding = '='.repeat((4 - base64String.length % 4) % 4);
-        const base64 = (base64String + padding)
-          .replace(/\-/g, '+')
-          .replace(/_/g, '/');
-
-        const rawData = window.atob(base64);
-        const outputArray = new Uint8Array(rawData.length);
-
-        for (let i = 0; i < rawData.length; ++i) {
-          outputArray[i] = rawData.charCodeAt(i);
+            if (token) {
+              console.log("✅ FCM Token:", token);
+              // Send to backend
+              await axios.post("http://localhost:5000/api/fcm/save-token", { token });
+            } else {
+              console.log("No registration token available. Request permission to generate one.");
+            }
+          }
         }
-        return outputArray;
+      } catch (err) {
+        console.error("An error occurred while retrieving token. ", err);
       }
-
-
-      await sendSubscription(subscription);
     }
 
-    setupPush();
-  }, [publicKey]);
+    requestPermission();
+  }, []);
 
   return null;
 }

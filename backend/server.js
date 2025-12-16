@@ -7,7 +7,8 @@ import express from "express";
 import path from "path";
 import cors from "cors";
 import assignment from "./Routes/assignment.js";
-import pushRoutes from "./Routes/push.js";
+
+import fcmRoutes from "./Routes/fcmRoutes.js"; // New FCM Push
 import connectDB from "./DataBase/db.js";
 import "./utils/reminderScheduler.js"; // Initialize cron job
 import { fileURLToPath } from "url";
@@ -33,7 +34,7 @@ app.get("/", (req, res) => {
 
 // API Routes
 app.use("/api/assignments", assignment);
-app.use("/api", pushRoutes);
+app.use("/api/fcm", fcmRoutes); // New FCM Routes
 
 // Catch-all for frontend routing - serve index.html for non-API routes
 app.use((req, res, next) => {
@@ -46,7 +47,7 @@ app.use((req, res, next) => {
 });
 
 // Port
-const PORT = process.env.PORT || 5000;
+const PORT = 5000;
 
 // Start server
 app.listen(PORT, () => {

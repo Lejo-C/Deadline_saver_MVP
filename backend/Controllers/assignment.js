@@ -1,5 +1,5 @@
 import Assignment from "../Models/assignment.js";
-import { sendPushToAll } from "./pushController.js";
+import { sendToAllDevices } from "./fcmController.js";
 
 export const assignment = async (req, res) => {
   try {
@@ -73,10 +73,10 @@ export const assignment = async (req, res) => {
     if (process.env.NODE_ENV !== "production") {
       setTimeout(async () => {
         try {
-          await sendPushToAll({
-            title: "Assignment Reminder",
-            body: `"${newAssignment.name}" is due in ${newAssignment.daysLeft} days.`
-          });
+          await sendToAllDevices(
+            "Assignment Reminder",
+            `"${newAssignment.name}" is due in ${newAssignment.daysLeft} days.`
+          );
           console.log(`📲 Demo push sent for: ${newAssignment.name}`);
         } catch (error) {
           console.error("Demo push failed:", error);

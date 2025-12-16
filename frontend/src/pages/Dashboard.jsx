@@ -20,7 +20,12 @@ const Dashboard = () => {
     const fetchAssignments = async () => {
         try {
             const data = await getAssignments();
-            setAssignments(data);
+            if (Array.isArray(data)) {
+                setAssignments(data);
+            } else {
+                console.error("Assignments data is not an array:", data);
+                setAssignments([]);
+            }
         } catch (error) {
             setToast({
                 message: 'Failed to load assignments',

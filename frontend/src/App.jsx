@@ -6,7 +6,7 @@ import NotificationSetup from './components/NotificationSetup';
 function App() {
   return (
     <Router>
-      <NotificationSetup publicKey="BOvvEvH2J5spAqGVr16DOmEemEhYZHLkEhx8UkswtSISBt4vKrfzrD-xv0ZI_sTeKBUTT6ito0ovdc2I_k4wj6s" />
+      <NotificationSetup />
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/add" element={<AddAssignment />} />
