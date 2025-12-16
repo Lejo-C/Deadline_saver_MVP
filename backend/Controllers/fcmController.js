@@ -16,7 +16,6 @@ export const saveToken = async (req, res) => {
             { upsert: true, new: true }
         );
 
-        console.log("✅ FCM Token saved:", token);
         res.status(200).json({ message: "Token saved successfully" });
     } catch (err) {
         console.error("Error saving FCM token:", err);
@@ -47,10 +46,8 @@ export const sendToAllDevices = async (title, body) => {
     console.log(`✅ Successfully sent ${response.successCount} messages.`);
 
     if (response.failureCount > 0) {
-        console.log("❌ Failed tokens:");
         response.responses.forEach((resp, idx) => {
             if (!resp.success) {
-                console.log(tokens[idx], resp.error);
                 if (resp.error.code === "messaging/registration-token-not-registered") {
                     FCMToken.deleteOne({ token: tokens[idx] })
                         .then(() => console.log("🗑️ Removed invalid token:", tokens[idx]))
