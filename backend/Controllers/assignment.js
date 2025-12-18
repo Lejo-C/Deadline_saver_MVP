@@ -4,19 +4,22 @@ import { sendToAllDevices } from "./fcmController.js";
 export const assignment = async (req, res) => {
   try {
     const { name, dueDate } = req.body;
+    console.log(`📝 Creating new assignment: ${name}`);
 
     if (!name || !dueDate) {
       return res.status(400).json({ error: "Assignment name and due date are required" });
     }
 
     const now = new Date();
-    const due = new Date(dueDate);
+    now.setHours(0, 0, 0, 0);
+    const due = new Date(`${dueDate}T00:00:00`);
 
     const diffTime = due - now;
-    const daysLeft = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const daysLeft = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
     // ✅ Handle past deadlines
     if (daysLeft < 0) {
+      console.log("⚠️ Assignment is past due, returning early.");
       const pastAssignment = await Assignment.create({
         name,
         dueDate,
@@ -59,6 +62,7 @@ export const assignment = async (req, res) => {
     if (daysLeft === 1) reminders.push("Tomorrow");
     if (daysLeft === 0) reminders.push("Today");
 
+    console.log("💾 Saving assignment to MongoDB...");
     // ✅ Save to MongoDB
     const newAssignment = await Assignment.create({
       name,
@@ -68,9 +72,11 @@ export const assignment = async (req, res) => {
       priority,
       reminders
     });
+    console.log("✅ Assignment saved to DB:", newAssignment._id);
 
     // 🎯 DEMO MODE: Send push notification after 10 seconds (MVP demo only)
-    if (process.env.NODE_ENV !== "production") {
+    if (true) { // Forced for debugging: process.env.NODE_ENV !== "production"
+      console.log(`⏳ Demo push scheduled for: ${newAssignment.name} in 10s...`);
       setTimeout(async () => {
         try {
           await sendToAllDevices(
@@ -140,10 +146,11 @@ export const updateAssignment = async (req, res) => {
 
     if (dueDate) {
       const now = new Date();
-      const due = new Date(dueDate);
+      now.setHours(0, 0, 0, 0);
+      const due = new Date(`${dueDate}T00:00:00`);
       const diffTime = due - now;
 
-      daysLeft = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      daysLeft = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
       if (daysLeft < 0) {
         daysLeft = 0;

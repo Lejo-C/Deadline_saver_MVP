@@ -26,12 +26,16 @@ export const saveToken = async (req, res) => {
 
 // Send Notification Logic (Reusable)
 export const sendToAllDevices = async (title, body) => {
+    console.log("✅ Notification send function triggered");
+
     if (!title || !body) {
         throw new Error("Title and body are required");
     }
 
     const tokensDocs = await FCMToken.find();
     const tokens = tokensDocs.map(doc => doc.token).filter(Boolean);
+
+    console.log(`📨 Sending push to ${tokens.length} subscribers`);
 
     if (tokens.length === 0) {
         console.log("⚠️ No subscribers found");
@@ -43,29 +47,41 @@ export const sendToAllDevices = async (title, body) => {
         tokens
     };
 
-    const response = await admin.messaging().sendMulticast(message);
-    console.log(`✅ Successfully sent ${response.successCount} messages.`);
+    try {
+        // Debug: Check which project we are authenticated as
+        // const projectId = admin.app().options.credential.projectId; // This might not be directly accessible depending on credential type
+        console.log(`ℹ️ Sending from Backend Project: ${process.env.FIREBASE_PROJECT_ID || 'Unknown'}`);
 
-    if (response.failureCount > 0) {
-        response.responses.forEach((resp, idx) => {
-            if (!resp.success) {
-                // Log error code but NOT the token
-                console.log(`❌ Failed to send to a token: ${resp.error.code}`);
+        const response = await admin.messaging().sendEachForMulticast(message);
+        console.log(`✅ Successfully sent ${response.successCount} messages.`);
 
-                if (resp.error.code === "messaging/registration-token-not-registered") {
-                    FCMToken.deleteOne({ token: tokens[idx] })
-                        .then(() => console.log("🗑️ Removed invalid token"))
-                        .catch(console.error);
+        if (response.failureCount > 0) {
+            response.responses.forEach((resp, idx) => {
+                if (!resp.success) {
+                    console.log(`❌ Failed to send to a token: ${resp.error.code}`);
+                    // Remove token for invalid registration OR auth errors (mismatched VAPID)
+                    if (
+                        resp.error.code === "messaging/registration-token-not-registered" ||
+                        resp.error.code === "messaging/third-party-auth-error" ||
+                        resp.error.code === "messaging/invalid-argument"
+                    ) {
+                        FCMToken.deleteOne({ token: tokens[idx] })
+                            .then(() => console.log(`🗑️ Removed invalid token (${resp.error.code})`))
+                            .catch(console.error);
+                    }
                 }
-            }
-        });
-    }
+            });
+        }
 
-    return {
-        success: true,
-        successCount: response.successCount,
-        failureCount: response.failureCount
-    };
+        return {
+            success: true,
+            successCount: response.successCount,
+            failureCount: response.failureCount
+        };
+    } catch (error) {
+        console.error("❌ Error in sendEachForMulticast:", error);
+        throw error;
+    }
 };
 
 // Send Notification to All Users (Controller)
