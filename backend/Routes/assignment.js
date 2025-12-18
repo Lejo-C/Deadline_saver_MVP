@@ -3,7 +3,9 @@ import {assignment, getAssignments, deleteAssignment, updateAssignment} from "..
 
 const router = Router();
 
-router.post("/analyze", assignment);
+router.post("/analyze", (req, res) => {
+  res.json({ message: "Analyze endpoint working" });
+});
 
 router.get("/", getAssignments);
 
