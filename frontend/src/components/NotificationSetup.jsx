@@ -31,7 +31,7 @@ export default function NotificationSetup() {
             if (token) {
               console.log("✅ FCM Token generated");
               // Send to backend
-              await axios.post("http://localhost:5000/api/fcm/save-token", { token });
+              await axios.post(`${API}/api/fcm/save-token`, { token });
             } else {
               console.log("No registration token available. Request permission to generate one.");
             }
