@@ -31,7 +31,7 @@ export default function NotificationSetup() {
             if (token) {
               console.log("✅ FCM Token generated");
               // Send to backend
-              await axios.post(`${import.meta.env.VITE_API_URL}/fcm/save-token`, { token });
+              await axios.post(`${import.meta.env.VITE_API_URL || '/api'}/fcm/save-token`, { token });
             } else {
               console.log("No registration token available. Request permission to generate one.");
             }
