@@ -1,11 +1,9 @@
-import {Router} from "express";
-import {assignment, getAssignments, deleteAssignment, updateAssignment} from "../Controllers/assignment.js";
+import { Router } from "express";
+import { assignment, getAssignments, deleteAssignment, updateAssignment } from "../Controllers/assignment.js";
 
 const router = Router();
 
-router.post("/analyze", (req, res) => {
-  res.json({ message: "Analyze endpoint working" });
-});
+router.post("/analyze", assignment);
 
 router.get("/", getAssignments);
 

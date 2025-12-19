@@ -59,15 +59,15 @@ export const sendToAllDevices = async (title, body) => {
             response.responses.forEach((resp, idx) => {
                 if (!resp.success) {
                     console.log(`❌ Failed to send to a token: ${resp.error.code}`);
-                    // Remove token for invalid registration OR auth errors (mismatched VAPID)
-                    if (
-                        resp.error.code === "messaging/registration-token-not-registered" ||
-                        resp.error.code === "messaging/third-party-auth-error" ||
-                        resp.error.code === "messaging/invalid-argument"
-                    ) {
+                    if (resp.error.code === "messaging/registration-token-not-registered" || resp.error.code === "messaging/invalid-argument") {
+                        // These are truly invalid tokens (uninstalled, etc.)
                         FCMToken.deleteOne({ token: tokens[idx] })
                             .then(() => console.log(`🗑️ Removed invalid token (${resp.error.code})`))
                             .catch(console.error);
+                    } else if (resp.error.code === "messaging/third-party-auth-error") {
+                        // This is a CONFIGURATION error (mismatched keys), not a bad token.
+                        // Do NOT delete the token, or you'll run out of subscribers while debugging.
+                        console.error(`🚨 CONFIG ERROR: VAPID Key in frontend doesn't match Firebase Project in backend! (${resp.error.code})`);
                     }
                 }
             });

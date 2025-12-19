@@ -7,7 +7,7 @@ export default function NotificationSetup() {
   const [permission, setPermission] = useState(Notification.permission);
 
   // VAPID Key from Project Settings > Cloud Messaging > Web configuration
-  const VAPID_KEY = "BLvGIQsE3nTVDWJW33VHy9siZ_KenlGlsIZIpZA1X21qUihsereFFWC_ElTiQwKMEZgrpzmemyfRHTz4OL4DdLY";
+  const VAPID_KEY = process.env.VAPID_KEY;
 
   useEffect(() => {
     async function requestPermission() {
